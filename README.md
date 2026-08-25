@@ -1,84 +1,94 @@
-[README_GIWAXS_Plotter_Web_v0.1.md](https://github.com/user-attachments/files/31425755/README_GIWAXS_Plotter_Web_v0.1.md)
-# GIWAXS Plotter RL — Web v0.1
+[README_GIWAXS_Plotter_Web_v1.0.md](https://github.com/user-attachments/files/31426971/README_GIWAXS_Plotter_Web_v1.0.md)
+# GIWAXS Plotter RL — Web v1.0
 
-A Streamlit web app developed from the newer standalone **GIWAXS Plotter RL** code.
+A Streamlit-based tool for GIWAXS data processing, visualization, and batch export.
 
-## Developer
-Richard Li
+**Developer:** Richard Li
 
-## What this app does
-This web version is based purely on the newer standalone GIWAXS code, not on the older GIWAXS section inside Python Plotter / PYRL.
+## Supported presets
 
-Supported presets:
-- Qimage
-- Qphi
-- Azimuthal
-- CirAvg
+- **Qimage** — reciprocal-space GIWAXS intensity maps
+- **Qphi** — intensity as a function of scattering vector and azimuthal angle
+- **Azimuthal** — azimuthal profile extraction over a selected q range
+- **CirAvg** — circularly averaged GIWAXS profiles
 
-## Important processing difference from old PYRL
-This app uses the newer workflow that reads processed q-space `.npz` files directly.
+## Input formats
 
-For Qimage, it expects:
+### Qimage
+Uses `.npz` files containing:
+
 - `qimg`
 - `qx`
 - `qz`
 
-inside the `.npz` file.
-
-That is different from the older PYRL GIWAXS section, which expected separate TIFF + CSV axis files.
-
-## Input expectations
-### Qimage
-- Sample files: `.npz`
-- Required keys: `qimg`, `qx`, `qz`
-- Optional blank-substrate background subtraction by matching `th...` in the filename
+The qx axis can optionally be flipped by multiplying it by -1.
 
 ### Qphi
-- Sample files: `.npz`
-- The app tries flexible key names for q, phi, and image arrays
+Uses `.npz` files containing q, phi/azimuth, and intensity arrays. The app accepts several common key names and automatically handles a transposed intensity array when dimensions otherwise match.
 
 ### Azimuthal
-- Sample files: `.npz`
-- Uses the Qphi-style `.npz`
-- Extracts the azimuthal profile by averaging intensity over the selected `q` range
-- Exports both `.csv` and `.png`
+Uses Qphi-style `.npz` files. Intensity is averaged across the selected q range and exported as both:
+
+- `.csv`
+- `.png`
 
 ### CirAvg
-- Sample files: `.csv`
-- Reads `q_ca` and `iq_ca` if present, otherwise uses the first two numeric columns
+Uses `.csv` files. If `q_ca` and `iq_ca` are present, those columns are used directly; otherwise the first two numeric columns are used.
 
-## Main settings
-- x/y range
-- vmin / vmax
-- log or linear scale
-- DPI
-- q range for Azimuthal extraction
-- colormap
-- qx flip for Qimage
-- transparent background
-- file-name filter
+## Qimage background subtraction
 
-## Background subtraction (Qimage only)
-If enabled, the app:
-1. reads sample and blank substrate `.npz` files,
-2. extracts incident angle from `th...` in the filename,
-3. matches sample/background by that angle,
-4. subtracts:
+Optional blank-substrate background subtraction is available for Qimage. Sample and background files are matched by the `th...` incident-angle tag in their filenames.
+
+The processed image is calculated as:
 
 `sample - scale_factor × background`
 
-## How to run locally
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-streamlit run streamlit_app.py
-```
+The app checks that the sample and background q grids match before subtraction.
 
-## GitHub / Streamlit Community Cloud structure
+## Plot controls
+
+The interface provides controls for:
+
+- x and y plotting ranges
+- `vmin` and `vmax`
+- logarithmic or linear intensity scale
+- colormap
+- qx flipping for Qimage
+- transparent background
+- export DPI
+- q range for Azimuthal extraction
+- filename filtering
+
+## Large-batch processing
+
+The export workflow is designed for large GIWAXS datasets. Files are processed one at a time, and generated outputs are written directly into a temporary disk-backed ZIP rather than accumulated in memory.
+
+This substantially reduces the processing-memory overhead for batches containing many NPZ files.
+
+## Export workflow
+
+1. Upload sample files.
+2. Choose the preset and plotting settings.
+3. Optionally preview the first matching file.
+4. Click **Build export ZIP**.
+5. Download the completed ZIP.
+
+The ZIP contains the generated plots, extracted CSV files where applicable, and an export log.
+
+## Deployment
+
+Recommended repository structure for Streamlit Community Cloud:
+
 ```text
 GIWAXS-Plotter-Web/
 ├── streamlit_app.py
 ├── requirements.txt
 └── README.md
 ```
+
+## Requirements
+
+- Streamlit
+- Matplotlib
+- NumPy
+- pandas
